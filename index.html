@@ -1,591 +1,453 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<title>Dry Store Stock Record (CTS Exact) </title>
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="utf-8">
+<title>Dry Store Stock Record</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-<!-- html2canvas + jsPDF -->
+<!-- libs -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <style>
-  :root{
-    --page-width-mm: 297mm; /* A4 landscape width */
-    --page-height-mm: 210mm; /* A4 landscape height */
-    --cell-font: 12px;
-  }
+    body {
+        font-family: Arial;
+        background: #f4f4f4;
+        margin: 0;
+        padding: 12px;
+    }
 
-  body{
-    margin:0;
-    font-family: Arial, Helvetica, sans-serif;
-    background:#f3f3f3;
-    padding:12px;
-  }
+    .wrapper {
+        max-width: 1200px;
+        margin: auto;
+    }
 
-  .wrapper{
-    max-width:1200px;
-    margin:0 auto;
-  }
+    .sheet {
+        background: #fff;
+        border: 1px solid #000;
+        padding: 18px;
+    }
 
-  /* CTS sheet container (visual on screen) */
-  .sheet {
-    background: #fff;
-    border: 1px solid #000;
-    padding: 18px;
-    box-sizing: border-box;
-  }
+    /* HEADER */
+    .header {
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid #000;
+        padding-bottom: 10px;
+        margin-bottom: 12px;
+    }
 
-  /* Header - mimic the printed form */
-  .cts-header{
-    display:flex;
-    align-items:flex-start;
-    gap:12px;
-    border-bottom:1px solid #000;
-    padding-bottom:8px;
-    margin-bottom:10px;
-  }
-  .cts-header img{ width:140px; height:auto; display:block; }
-  .cts-header .title{
-    text-align:center;
-    width:100%;
-    font-weight:700;
-    font-size:16px;
-  }
-  .cts-sub{
-    font-size:11px;
-    text-align:center;
-    margin-top:3px;
-    line-height:1.1;
-  }
+    .header img {
+        width: 130px;
+        margin-right: 20px;
+    }
 
-  /* Top info row */
-  .top-table{ width:100%; border-collapse:collapse; margin-top:8px; }
-  .top-table td{
-    border:1px solid #000;
-    padding:6px;
-    font-size:13px;
-    vertical-align:middle;
-  }
-  .top-table input{ border:none; width:100%; padding:4px; font-size:13px; }
+    .header-title {
+        font-size: 20px;
+        font-weight: bold;
+        text-align: center;
+        width: 100%;
+    }
 
-  /* Main table */
-  .table-wrap { margin-top:10px; overflow:auto; -webkit-overflow-scrolling:touch; }
-  table.main {
-    border-collapse:collapse;
-    width:1200px; /* wider than viewport to preserve layout; scroll container handles overflow */
-    min-width:1200px;
-  }
-  table.main th, table.main td{
-    border:1px solid #000;
-    padding:6px 4px;
-    font-size:var(--cell-font);
-    text-align:center;
-    vertical-align:middle;
-  }
-  /* Column widths tuned to match original sheet proportions */
-  table.main th:nth-child(1){ width:48px; }      /* S.No */
-  table.main th:nth-child(2){ width:300px; }     /* Items */
-  table.main th:nth-child(3){ width:140px; }     /* Batch No */
-  table.main th:nth-child(4){ width:120px; }     /* Receiving Date */
-  table.main th:nth-child(5){ width:120px; }     /* Mfg Date */
-  table.main th:nth-child(6){ width:120px; }     /* Expiry Date */
-  table.main th:nth-child(7){ width:90px; }      /* Shelf Life */
-  table.main th:nth-child(8){ width:120px; }     /* Stock Qty */
-  table.main th:nth-child(9){ width:150px; }     /* Remarks */
+    .header-sub {
+        text-align: center;
+        margin-top: 3px;
+        font-size: 12px;
+        line-height: 1.2;
+    }
 
-  table.main input{
-    width:100%;
-    border:none;
-    padding:4px;
-    font-size:13px;
-    box-sizing:border-box;
-    text-align:center;
-  }
+    /* TOP FIELDS */
+    .top-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 10px;
+    }
 
-  /* Footer */
-  .bottom-table{ width:100%; border-collapse:collapse; margin-top:10px; }
-  .bottom-table td{ border:1px solid #000; padding:6px; font-size:13px; }
+    .top-table td {
+        border: 1px solid #000;
+        padding: 6px;
+        font-size: 14px;
+    }
 
-  /* Buttons */
-  .controls{ margin-top:12px; display:flex; gap:10px; flex-wrap:wrap; }
-  .controls button{
-    background:#007bff; color:#fff; border:none; padding:10px 12px; border-radius:6px; cursor:pointer; font-size:14px;
-  }
-  .controls button.save{ background:#28a745; }
-  .controls button.pdf{ background:#6f42c1; }
-  .controls button.reset{ background:#dc3545; }
-  .controls button.unlock{ background:#ff8c00; }
+    .top-table input {
+        width: 100%;
+        border: none;
+        outline: none;
+        font-size: 14px;
+        padding: 2px 4px;
+        box-sizing: border-box;
+    }
 
-  /* locked style */
-  .locked-row input{ background:transparent; color:#222; }
+    /* BODY TABLE */
+    .table-wrap {
+        width: 100%;
+        overflow-x: auto;
+    }
 
-  /* Hidden area used to render exact A4 pages for PDF */
-  #pdfPagesContainer{ position:fixed; left:-99999px; top:-99999px; opacity:0; pointer-events:none; }
+    .main-table {
+        width: 1400px;
+        border-collapse: collapse;
+        table-layout: fixed;
+    }
 
-  /* Ensure A4 mm sizes for PDF page clones */
-  .a4page{
-    width:var(--page-width-mm);
-    height:var(--page-height-mm);
-    box-sizing:border-box;
-    background:white;
-    padding:14mm; /* inner margin */
-    border:1px solid #fff;
-  }
+    .main-table th,
+    .main-table td {
+        border: 1px solid #000;
+        padding: 6px 5px;
+        text-align: center;
+        font-size: 13px;
+    }
 
-  /* Keep header widths inside print page consistent */
-  .a4page .main{ width:100%; min-width:0; table-layout:fixed; }
+    .main-table input {
+        width: 100%;
+        border: none;
+        outline: none;
+        padding: 4px;
+        font-size: 13px;
+        box-sizing: border-box;
+        text-align: center;
+    }
 
-  @media (max-width:700px){
-    .cts-header img{ width:110px; }
-  }
+    .locked input {
+        background: transparent;
+        color: #111;
+    }
 
+    /* FOOTER */
+    .bottom-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 12px;
+    }
+
+    .bottom-table td {
+        border: 1px solid #000;
+        padding: 6px;
+        font-size: 14px;
+    }
+
+    /* BUTTONS */
+    .controls {
+        margin-top: 14px;
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+
+    button {
+        background: #007bff;
+        color: #fff;
+        font-size: 14px;
+        padding: 10px 14px;
+        border: none;
+        border-radius: 6px;
+    }
+
+    .save { background: #28a745; }
+    .pdf { background: #6f42c1; }
+    .reset { background: #dc3545; }
+
+    /* PDF PAGES */
+    #pdfPages {
+        position: fixed;
+        top: -99999px;
+        left: -99999px;
+        visibility: hidden;
+    }
+
+    .page {
+        width: 297mm;
+        height: 210mm;
+        padding: 12mm;
+        box-sizing: border-box;
+        background: #fff;
+    }
 </style>
 </head>
+
 <body>
-  <div class="wrapper">
-    <div class="sheet" id="screenSheet">
 
-      <!-- Header -->
-      <div class="cts-header">
-        <img src="logo.png" alt="logo">
-        <div style="width:100%;">
-          <div class="title">Dry Store Stock Record - Dry Store Stock Record</div>
-          <div class="cts-sub">Release ID: CQAG-DSSR / 1.1.0 / 01-Jan-2023 &nbsp; | &nbsp; C3: Private &nbsp; | &nbsp; Controlled Copy<br>
-            Project ID: &lt;Project ID &gt; / &lt;SCL-ID&gt; / Ver - &lt;No&gt;
-          </div>
+<div class="wrapper">
+
+    <div class="sheet" id="sheet">
+
+        <!-- HEADER -->
+        <div class="header">
+            <img src="logo.png" alt="logo">
+            <div style="width:100%;">
+                <div class="header-title">Dry Store Stock Record</div>
+                <div class="header-sub">
+                    Release ID: CQAG-DSSR / 1.1.0 / 01-Jan-2023 | C3: Private | Controlled Copy <br>
+                    Project ID: &lt;Project ID&gt; / &lt;SCL-ID&gt; / Ver - &lt;No&gt;
+                </div>
+            </div>
         </div>
-      </div>
 
-      <!-- Top Info -->
-      <table class="top-table">
-        <tr>
-          <td>Date: <input id="date" type="date"></td>
-          <td>Vendor Name: <input id="vendor" type="text" placeholder=""></td>
-          <td>Vendor Supervisor Name: <input id="supervisor" type="text" placeholder=""></td>
-        </tr>
-      </table>
-
-      <!-- Main scrollable table (unlimited rows visually) -->
-      <div class="table-wrap" id="tableWrap">
-        <table class="main" id="mainTable">
-          <thead>
+        <!-- TOP INPUT ROW -->
+        <table class="top-table">
             <tr>
-              <th>S.No</th>
-              <th>Items</th>
-              <th>Batch No</th>
-              <th>Receiving Date</th>
-              <th>Manufacturing Date</th>
-              <th>Expiry Date</th>
-              <th>Shelf Life</th>
-              <th>Stock Quantity</th>
-              <th>Remarks</th>
+                <td style="width:33%">Date: <input type="date" id="date"></td>
+                <td style="width:33%">Vendor Name: <input id="vendor"></td>
+                <td style="width:33%">Vendor Supervisor Name: <input id="supervisor"></td>
             </tr>
-          </thead>
-          <tbody id="tbody"></tbody>
         </table>
-      </div>
 
-      <!-- Footer lines -->
-      <table class="bottom-table">
-        <tr>
-          <td style="width:50%;">Vendor PoC :</td>
-          <td style="width:50%;">Verified by F&B team :</td>
-        </tr>
-      </table>
+        <!-- MAIN TABLE -->
+        <div class="table-wrap">
+            <table class="main-table" id="mainTable">
+                <thead>
+                    <tr>
+                        <th style="width:50px">S.No</th>
+                        <th style="width:220px">Items</th>
+                        <th style="width:160px">Batch No</th>
+                        <th style="width:150px">Receiving Date</th>
+                        <th style="width:150px">Manufacturing Date</th>
+                        <th style="width:140px">Expiry Date</th>
+                        <th style="width:100px">Shelf Life</th>
+                        <th style="width:130px">Stock Quantity</th>
+                        <th style="width:200px">Remarks</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody"></tbody>
+            </table>
+        </div>
+
+        <!-- FOOTER -->
+        <table class="bottom-table">
+            <tr>
+                <td style="width:50%">Vendor PoC :</td>
+                <td style="width:50%">Verified by F&B team :</td>
+            </tr>
+        </table>
     </div>
 
-    <!-- Controls -->
-    <div class="controls" style="margin-bottom:30px;">
-      <button onclick="addRow()">Add Row</button>
-      <button class="save" onclick="saveData()">Save (Lock Existing)</button>
-      <button class="unlock" onclick="unlockAll()">Unlock All</button>
-      <button class="pdf" onclick="downloadPDF()">Download PDF (A4 Landscape CTS)</button>
-      <button class="reset" onclick="resetAll()">Reset</button>
+    <div class="controls">
+        <button onclick="addRow()">Add Row</button>
+        <button class="save" onclick="saveRows()">Save (Lock)</button>
+        <button class="pdf" onclick="downloadPDF()">Download PDF</button>
+        <button class="reset" onclick="resetAll()">Reset</button>
     </div>
-  </div>
 
-  <!-- Hidden container for PDF pages -->
-  <div id="pdfPagesContainer"></div>
+</div>
+
+<div id="pdfPages"></div>
 
 <script>
-/* ============================
-   Config
-   ============================ */
-const ROWS_PER_PAGE = 13; // number of table rows per printed A4 page body area (matches original)
-const STORAGE_KEY = 'cts_unlimited_records_v1';
+let data = [];
+const STORAGE_KEY = "dry_store_final_2025";
+const ROWS_PER_PAGE = 13;
 
-/* ============================
-   Data model and helpers
-   ============================ */
-let records = []; // array of {item,batch,receiving,mfg,exp,shelf,qty,remarks,locked}
+function addRow(values=null) {
+    const tbody = document.getElementById("tbody");
+    const row = document.createElement("tr");
 
-function createRowElement(index, record){
-  const tr = document.createElement('tr');
-  if(record && record.locked) tr.classList.add('locked-row');
+    const index = data.length + 1;
 
-  // S.No
-  const tdNo = document.createElement('td');
-  tdNo.textContent = index+1;
-  tr.appendChild(tdNo);
-
-  // create 8 inputs
-  const fields = ['item','batch','receiving','mfg','exp','shelf','qty','remarks'];
-  fields.forEach((f,i) => {
-    const td = document.createElement('td');
-    const inp = document.createElement('input');
-    inp.type = (['receiving','mfg','exp'].includes(f)) ? 'date' : 'text';
-    inp.value = record ? (record[f] || '') : '';
-    if(record && record.locked) inp.disabled = true;
-    // store field key
-    inp.dataset.field = f;
-    td.appendChild(inp);
-    tr.appendChild(td);
-  });
-  return tr;
-}
-
-function renderTable(){
-  const tbody = document.getElementById('tbody');
-  tbody.innerHTML = '';
-  records.forEach((r, idx) => {
-    tbody.appendChild(createRowElement(idx, r));
-  });
-}
-
-/* ============================
-   Add row (always editable)
-   ============================ */
-function addRow(prefill = null){
-  const rec = prefill ? {...prefill, locked: !!prefill.locked} : {item:'',batch:'',receiving:'',mfg:'',exp:'',shelf:'',qty:'',remarks:'', locked:false};
-  records.push(rec);
-  renderTable();
-  // scroll to bottom
-  const wrap = document.getElementById('tableWrap');
-  setTimeout(()=> wrap.scrollTop = wrap.scrollHeight, 30);
-}
-
-/* ============================
-   Save current state: lock ALL currently visible rows
-   (existing rows become non-editable, new rows can be added later)
-   ============================ */
-function saveData(){
-  // read current inputs into records
-  const tbody = document.getElementById('tbody');
-  const rows = Array.from(tbody.querySelectorAll('tr'));
-  rows.forEach((tr, idx) => {
-    const inputs = Array.from(tr.querySelectorAll('input'));
-    // inputs correspond to fields order
-    const [item,batch,receiving,mfg,exp,shelf,qty,remarks] = inputs.map(i => i.value || '');
-    records[idx] = { item,batch,receiving,mfg,exp,shelf,qty,remarks, locked:true };
-  });
-
-  // persist
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({
-    header: {date: document.getElementById('date').value, vendor: document.getElementById('vendor').value, supervisor: document.getElementById('supervisor').value},
-    records
-  }));
-
-  renderTable();
-  alert('Saved & locked current rows.');
-}
-
-/* ============================
-   Unlock all (for edits) - careful
-   ============================ */
-function unlockAll(){
-  if(!confirm('Unlock ALL rows for editing? This will make saved rows editable again.')) return;
-  records = records.map(r => ({...r, locked:false}));
-  renderTable();
-  localStorage.removeItem(STORAGE_KEY);
-}
-
-/* ============================
-   Reset everything
-   ============================ */
-function resetAll(){
-  if(!confirm('Clear all saved data and start fresh?')) return;
-  records = [];
-  document.getElementById('date').value = '';
-  document.getElementById('vendor').value = '';
-  document.getElementById('supervisor').value = '';
-  localStorage.removeItem(STORAGE_KEY);
-  renderTable();
-  addRow(); addRow(); // add a couple rows visually
-}
-
-/* ============================
-   On load - restore from localStorage
-   ============================ */
-window.addEventListener('load', () => {
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if(saved){
-    try{
-      const parsed = JSON.parse(saved);
-      if(parsed.header){
-        document.getElementById('date').value = parsed.header.date || '';
-        document.getElementById('vendor').value = parsed.header.vendor || '';
-        document.getElementById('supervisor').value = parsed.header.supervisor || '';
-      }
-      if(Array.isArray(parsed.records) && parsed.records.length){
-        records = parsed.records.map(r => ({...r}));
-        // ensure locked flag
-        records.forEach(r => { r.locked = !!r.locked; });
-        renderTable();
-        return;
-      }
-    }catch(e){ console.warn('restore error', e); }
-  }
-  // default rows
-  addRow(); addRow();
-});
-
-/* ============================
-   Build A4 page clone (exact CTS layout)
-   Returns DOM element sized in mm (CSS uses mm units).
-   ============================ */
-function buildA4Page(headerData, pageRecords){
-  // create page div
-  const page = document.createElement('div');
-  page.className = 'a4page';
-
-  // header area - replicate same structure as screen but sized to fit A4 print
-  const header = document.createElement('div');
-  header.style.display='flex';
-  header.style.alignItems='flex-start';
-  header.style.gap='12px';
-  header.style.borderBottom='1px solid #000';
-  header.style.paddingBottom='8px';
-  header.style.marginBottom='10px';
-
-  const logo = document.createElement('img');
-  logo.src = 'logo.png';
-  logo.style.width = '120px';
-  logo.style.height = 'auto';
-  header.appendChild(logo);
-
-  const headerTextWrap = document.createElement('div');
-  headerTextWrap.style.width = '100%';
-  const title = document.createElement('div');
-  title.style.fontWeight='700';
-  title.style.fontSize='16px';
-  title.style.textAlign='center';
-  title.textContent = 'Dry Store Stock Record - Dry Store Stock Record';
-  const sub = document.createElement('div');
-  sub.style.fontSize='11px';
-  sub.style.textAlign='center';
-  sub.style.marginTop='3px';
-  sub.style.lineHeight='1.1';
-  sub.innerHTML = 'Release ID: CQAG-DSSR / 1.1.0 / 01-Jan-2023 &nbsp; | &nbsp; C3: Private &nbsp; | &nbsp; Controlled Copy<br>Project ID: &lt;Project ID &gt; / &lt;SCL-ID&gt; / Ver - &lt;No&gt;';
-  headerTextWrap.appendChild(title);
-  headerTextWrap.appendChild(sub);
-  header.appendChild(headerTextWrap);
-  page.appendChild(header);
-
-  // top info table
-  const topTable = document.createElement('table');
-  topTable.style.width='100%';
-  topTable.style.borderCollapse='collapse';
-  topTable.style.marginTop='6px';
-  const topTr = document.createElement('tr');
-  ['Date:','Vendor Name:','Vendor Supervisor Name:'].forEach((label, idx) => {
-    const td = document.createElement('td');
-    td.style.border='1px solid #000';
-    td.style.padding='6px';
-    td.style.fontSize='12px';
-    td.textContent = label + ' ';
-    // add value from headerData if exists
-    const span = document.createElement('span');
-    span.textContent = (idx===0? (headerData.date||'') : idx===1? (headerData.vendor||'') : (headerData.supervisor||''));
-    span.style.marginLeft='6px';
-    td.appendChild(span);
-    topTr.appendChild(td);
-  });
-  topTable.appendChild(topTr);
-  page.appendChild(topTable);
-
-  // main table (exact columns)
-  const table = document.createElement('table');
-  table.style.width='100%';
-  table.style.borderCollapse='collapse';
-  table.style.marginTop='8px';
-  table.className = 'main';
-
-  const thead = document.createElement('thead');
-  const htr = document.createElement('tr');
-  const headers = ['S.No','Items','Batch No','Receiving Date','Manufacturing Date','Expiry Date','Shelf Life','Stock Quantity','Remarks'];
-  headers.forEach(h => {
-    const th = document.createElement('th');
-    th.style.border='1px solid #000';
-    th.style.padding='6px';
-    th.style.fontSize='12px';
-    th.style.textAlign='center';
-    th.textContent = h;
-    htr.appendChild(th);
-  });
-  thead.appendChild(htr);
-  table.appendChild(thead);
-
-  const tb = document.createElement('tbody');
-  pageRecords.forEach((r, idx) => {
-    const tr = document.createElement('tr');
-    tr.style.pageBreakInside='avoid';
-    const cells = [
-      (r._sno || idx+1),
-      r.item||'',
-      r.batch||'',
-      r.receiving||'',
-      r.mfg||'',
-      r.exp||'',
-      r.shelf||'',
-      r.qty||'',
-      r.remarks||''
-    ];
-    cells.forEach(c => {
-      const td = document.createElement('td');
-      td.style.border='1px solid #000';
-      td.style.padding='6px';
-      td.style.fontSize='12px';
-      td.style.verticalAlign='middle';
-      td.style.height='28px';
-      td.textContent = c;
-      tr.appendChild(td);
-    });
-    tb.appendChild(tr);
-  });
-
-  // empty rows fill if pageRecords fewer than ROWS_PER_PAGE
-  for(let i=pageRecords.length;i<ROWS_PER_PAGE;i++){
-    const tr = document.createElement('tr');
-    for(let j=0;j<9;j++){
-      const td = document.createElement('td');
-      td.style.border='1px solid #000';
-      td.style.padding='6px';
-      td.style.fontSize='12px';
-      td.style.height='28px';
-      td.textContent = '';
-      tr.appendChild(td);
-    }
-    tb.appendChild(tr);
-  }
-
-  table.appendChild(tb);
-  page.appendChild(table);
-
-  // footer
-  const bottomTable = document.createElement('table');
-  bottomTable.style.width='100%';
-  bottomTable.style.borderCollapse='collapse';
-  bottomTable.style.marginTop='8px';
-  const btr = document.createElement('tr');
-  ['Vendor PoC :','Verified by F&B team :'].forEach(txt => {
-    const td = document.createElement('td');
-    td.style.border='1px solid #000';
-    td.style.padding='6px';
-    td.style.fontSize='12px';
-    td.textContent = txt;
-    btr.appendChild(td);
-  });
-  bottomTable.appendChild(btr);
-  page.appendChild(bottomTable);
-
-  return page;
-}
-
-/* ============================
-   Create PDF pages from records
-   ============================ */
-async function downloadPDF(){
-  try{
-    // read header values live (so unsaved header appears too)
-    const headerData = {
-      date: document.getElementById('date').value || '',
-      vendor: document.getElementById('vendor').value || '',
-      supervisor: document.getElementById('supervisor').value || ''
+    const rowData = values || {
+        item:"",
+        batch:"",
+        rec:"",
+        mfg:"",
+        exp:"",
+        shelf:"",
+        qty:"",
+        remarks:"",
+        locked:false
     };
 
-    // gather all records from DOM to capture unsaved edits too
-    syncRecordsFromDOM();
+    data.push(rowData);
 
-    // prepare pages
-    const allRecords = records.map((r,i) => ({...r, _sno: i+1}));
-    const pages = [];
-    if(allRecords.length===0) {
-      pages.push(allRecords.slice(0, ROWS_PER_PAGE));
+    const inputs = `
+        <td>${index}</td>
+        <td><input value="${rowData.item}"></td>
+        <td><input value="${rowData.batch}"></td>
+        <td><input type="date" value="${rowData.rec}"></td>
+        <td><input type="date" value="${rowData.mfg}"></td>
+        <td><input type="date" value="${rowData.exp}"></td>
+        <td><input value="${rowData.shelf}"></td>
+        <td><input value="${rowData.qty}"></td>
+        <td><input value="${rowData.remarks}"></td>
+    `;
+
+    row.innerHTML = inputs;
+    if (rowData.locked) row.classList.add("locked");
+
+    tbody.appendChild(row);
+}
+
+function saveRows() {
+    const tbody = document.querySelectorAll("#tbody tr");
+
+    tbody.forEach((tr,i)=>{
+        let tds = tr.querySelectorAll("input");
+        data[i] = {
+            item: tds[0].value,
+            batch: tds[1].value,
+            rec: tds[2].value,
+            mfg: tds[3].value,
+            exp: tds[4].value,
+            shelf: tds[5].value,
+            qty: tds[6].value,
+            remarks: tds[7].value,
+            locked: true
+        };
+        tr.classList.add("locked");
+        tds.forEach(i=>i.disabled=true);
+    });
+
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        date:date.value,
+        vendor:vendor.value,
+        supervisor:supervisor.value,
+        rows:data
+    }));
+
+    alert("Saved & Locked!");
+}
+
+function resetAll() {
+    if(!confirm("Clear everything?")) return;
+    data=[];
+    document.getElementById("tbody").innerHTML="";
+    localStorage.removeItem(STORAGE_KEY);
+}
+
+window.onload = ()=>{
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if(saved){
+        const obj = JSON.parse(saved);
+        date.value=obj.date;
+        vendor.value=obj.vendor;
+        supervisor.value=obj.supervisor;
+        obj.rows.forEach(r=>addRow(r));
     } else {
-      for(let i=0;i<allRecords.length;i+=ROWS_PER_PAGE){
-        pages.push(allRecords.slice(i, i+ROWS_PER_PAGE));
-      }
+        addRow();
+        addRow();
     }
+}
 
-    // jsPDF setup
+/* PDF EXPORT */
+async function downloadPDF(){
     const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' });
 
-    // container to hold pages while rendering
-    const container = document.getElementById('pdfPagesContainer');
-    container.innerHTML = '';
+    const header = {
+        date:date.value,
+        vendor:vendor.value,
+        supervisor:supervisor.value
+    };
 
-    for(let p=0;p<pages.length;p++){
-      const pageEl = buildA4Page(headerData, pages[p]);
-      container.appendChild(pageEl);
+    // sync unsaved rows
+    const trs = document.querySelectorAll("#tbody tr");
+    trs.forEach((tr,i)=>{
+        const ins = tr.querySelectorAll("input");
+        data[i].item = ins[0].value;
+        data[i].batch = ins[1].value;
+        data[i].rec = ins[2].value;
+        data[i].mfg = ins[3].value;
+        data[i].exp = ins[4].value;
+        data[i].shelf = ins[5].value;
+        data[i].qty = ins[6].value;
+        data[i].remarks = ins[7].value;
+    });
 
-      // ensure images (logo) loaded first
-      await new Promise(res => {
-        const img = pageEl.querySelector('img');
-        if(!img || img.complete) return res();
-        img.onload = img.onerror = res;
-      });
-
-      // render with html2canvas at higher scale for clarity
-      const canvas = await html2canvas(pageEl, { scale: 2.5, useCORS:true, allowTaint:true });
-      const imgData = canvas.toDataURL('image/png');
-
-      // compute dimensions to fit A4 landscape
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-
-      if(p>0) pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      // remove pageEl to save memory
-      container.removeChild(pageEl);
+    let pages = [];
+    for(let i=0; i<data.length; i+=ROWS_PER_PAGE){
+        pages.push(data.slice(i, i+ROWS_PER_PAGE));
     }
 
-    pdf.save('Dry_Store_Record_CTS_Landscape.pdf');
-  }catch(err){
-    console.error(err);
-    alert('PDF export failed: '+err.message);
-  }
-}
+    const pdf = new jsPDF({
+        orientation:'landscape',
+        unit:'mm',
+        format:'a4',
+        compress:true
+    });
 
-/* ============================
-   Sync records from DOM (capture unsaved edits)
-   ============================ */
-function syncRecordsFromDOM(){
-  const tbody = document.getElementById('tbody');
-  const trList = Array.from(tbody.querySelectorAll('tr'));
-  trList.forEach((tr, idx) => {
-    const inputs = Array.from(tr.querySelectorAll('input'));
-    if(!records[idx]) records[idx] = {item:'',batch:'',receiving:'',mfg:'',exp:'',shelf:'',qty:'',remarks:'',locked:false};
-    records[idx].item = inputs[0].value || '';
-    records[idx].batch = inputs[1].value || '';
-    records[idx].receiving = inputs[2].value || '';
-    records[idx].mfg = inputs[3].value || '';
-    records[idx].exp = inputs[4].value || '';
-    records[idx].shelf = inputs[5].value || '';
-    records[idx].qty = inputs[6].value || '';
-    records[idx].remarks = inputs[7].value || '';
-    // keep locked flag as-is (we don't toggle here)
-  });
-  // trim trailing empty rows optional
-}
+    const container = document.getElementById("pdfPages");
+    container.innerHTML="";
 
-/* ============================
-   Expose to console for quick debug
-   ============================ */
-window._cts = {
-  addRow, saveData, unlockAll, resetAll, downloadPDF, records
-};
+    for(let p=0; p<pages.length; p++){
+        const page = document.createElement("div");
+        page.className="page";
+        container.appendChild(page);
+
+        // BUILD EXACT PAGE
+        page.innerHTML = `
+            <div style="display:flex;align-items:center;border-bottom:1px solid #000;padding-bottom:8px;margin-bottom:8px;">
+                <img src="logo.png" style="width:110px;margin-right:15px;">
+                <div style="width:100%;text-align:center;">
+                    <div style="font-size:16px;font-weight:bold;">Dry Store Stock Record</div>
+                    <div style="font-size:11px;margin-top:3px;">
+                        Release ID: CQAG-DSSR / 1.1.0 / 01-Jan-2023 | C3: Private | Controlled Copy<br>
+                        Project ID: &lt;Project ID&gt; / &lt;SCL-ID&gt; / Ver - &lt;No&gt;
+                    </div>
+                </div>
+            </div>
+
+            <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px;">
+                <tr>
+                    <td style="border:1px solid #000;padding:5px;">Date: ${header.date}</td>
+                    <td style="border:1px solid #000;padding:5px;">Vendor Name: ${header.vendor}</td>
+                    <td style="border:1px solid #000;padding:5px;">Vendor Supervisor Name: ${header.supervisor}</td>
+                </tr>
+            </table>
+
+            <table style="width:100%;border-collapse:collapse;font-size:12px;">
+                <thead>
+                    <tr>
+                        <th style="border:1px solid #000;padding:5px;width:40px;">S.No</th>
+                        <th style="border:1px solid #000;padding:5px;">Items</th>
+                        <th style="border:1px solid #000;padding:5px;">Batch No</th>
+                        <th style="border:1px solid #000;padding:5px;">Receiving Date</th>
+                        <th style="border:1px solid #000;padding:5px;">Manufacturing Date</th>
+                        <th style="border:1px solid #000;padding:5px;">Expiry Date</th>
+                        <th style="border:1px solid #000;padding:5px;">Shelf Life</th>
+                        <th style="border:1px solid #000;padding:5px;">Stock Qty</th>
+                        <th style="border:1px solid #000;padding:5px;">Remarks</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${pages[p].map((r,i)=>`
+                        <tr>
+                            <td style="border:1px solid #000;padding:5px;">${(p*ROWS_PER_PAGE)+i+1}</td>
+                            <td style="border:1px solid #000;padding:5px;">${r.item}</td>
+                            <td style="border:1px solid #000;padding:5px;">${r.batch}</td>
+                            <td style="border:1px solid #000;padding:5px;">${r.rec}</td>
+                            <td style="border:1px solid #000;padding:5px;">${r.mfg}</td>
+                            <td style="border:1px solid #000;padding:5px;">${r.exp}</td>
+                            <td style="border:1px solid #000;padding:5px;">${r.shelf}</td>
+                            <td style="border:1px solid #000;padding:5px;">${r.qty}</td>
+                            <td style="border:1px solid #000;padding:5px;">${r.remarks}</td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>
+
+            <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:6px;">
+                <tr>
+                    <td style="border:1px solid #000;padding:5px;">Vendor PoC :</td>
+                    <td style="border:1px solid #000;padding:5px;">Verified by F&B team :</td>
+                </tr>
+            </table>
+        `;
+
+        await new Promise(res=>{
+            const img=page.querySelector("img");
+            if(!img||img.complete)res();
+            else img.onload=res;
+        });
+
+        const canvas = await html2canvas(page, {scale:1.4});
+        const img = canvas.toDataURL('image/jpeg',0.62);
+
+        if(p>0) pdf.addPage();
+        pdf.addImage(img, "JPEG", 0, 0, 297, 210);
+
+        container.innerHTML="";
+    }
+
+    pdf.save("Dry_Store_Record.pdf");
+}
 </script>
+
 </body>
 </html>
