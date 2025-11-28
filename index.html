@@ -28,13 +28,20 @@
         padding: 18px;
     }
 
+    /* FULL HEADER BOX */
+    .header-box {
+        border: 1px solid #000;
+        padding: 10px;
+        margin-bottom: 12px;
+    }
+
     /* HEADER */
     .header {
         display: flex;
         align-items: center;
         border-bottom: 1px solid #000;
         padding-bottom: 10px;
-        margin-bottom: 12px;
+        margin-bottom: 10px;
     }
 
     .header img {
@@ -60,7 +67,6 @@
     .top-table {
         width: 100%;
         border-collapse: collapse;
-        margin-bottom: 10px;
     }
 
     .top-table td {
@@ -104,8 +110,8 @@
         outline: none;
         padding: 4px;
         font-size: 13px;
-        box-sizing: border-box;
         text-align: center;
+        box-sizing: border-box;
     }
 
     .locked input {
@@ -148,7 +154,7 @@
     .pdf { background: #6f42c1; }
     .reset { background: #dc3545; }
 
-    /* PDF PAGES */
+    /* PDF PAGE */
     #pdfPages {
         position: absolute;
         left: -9999px;
@@ -172,32 +178,38 @@
 
     <div class="sheet" id="sheet">
 
-        <!-- HEADER -->
-        <div class="header">
-            <img src="logo.png" alt="logo">
-            <div style="width:100%;">
-                <div class="header-title">Dry Store Stock Record</div>
-                <div class="header-sub">
-                    Release ID: CQAG-DSSR / 1.1.0 / 01-Jan-2023 | C3: Private | Controlled Copy <br>
-                    Project ID: &lt;Project ID&gt; / &lt;SCL-ID&gt; / Ver - &lt;No&gt;
+        <!-- HEADER ENCLOSED IN BIG BOX -->
+        <div class="header-box">
+
+            <!-- HEADER -->
+            <div class="header">
+                <img src="logo.png" alt="logo">
+                <div style="width:100%;">
+                    <div class="header-title">Dry Store Stock Record</div>
+                    <div class="header-sub">
+                        Release ID: CQAG-DSSR / 1.1.0 / 01-Jan-2023 | C3: Private | Controlled Copy <br>
+                        Project ID: &lt;Project ID&gt; / &lt;SCL-ID&gt; / Ver - &lt;No&gt;
+                    </div>
                 </div>
             </div>
+
+            <!-- TOP INPUT ROWS -->
+            <table class="top-table">
+                <tr>
+                    <td style="width:33%">Date: <input type="date" id="date"></td>
+                    <td style="width:33%">Vendor Name: <input id="vendor"></td>
+                    <td style="width:33%">Vendor Supervisor Name: <input id="supervisor"></td>
+                </tr>
+
+                <tr>
+                    <td>Building: <input id="building"></td>
+                    <td>Floor: <input id="floor"></td>
+                    <td>Counter: <input id="counter"></td>
+                </tr>
+            </table>
+
         </div>
-
-        <!-- TOP INPUT ROWS -->
-        <table class="top-table">
-            <tr>
-                <td style="width:33%">Date: <input type="date" id="date"></td>
-                <td style="width:33%">Vendor Name: <input id="vendor"></td>
-                <td style="width:33%">Vendor Supervisor Name: <input id="supervisor"></td>
-            </tr>
-
-            <tr>
-                <td>Building: <input id="building"></td>
-                <td>Floor: <input id="floor"></td>
-                <td>Counter: <input id="counter"></td>
-            </tr>
-        </table>
+        <!-- END HEADER BOX -->
 
         <!-- MAIN TABLE -->
         <div class="table-wrap">
@@ -242,14 +254,19 @@
 
 <script>
 let data=[];
-const STORAGE="cts_v4_final_fix";
+const STORAGE="cts_v5";
 const ROWS=13;
 
 /* ADD ROW */
 function addRow(v=null){
     let tbody=document.getElementById("tbody");
     let index=data.length+1;
-    let r=v||{item:"",batch:"",rec:"",mfg:"",exp:"",shelf:"",qty:"",remarks:"",locked:false};
+
+    let r=v||{
+        item:"",batch:"",rec:"",mfg:"",exp:"",
+        shelf:"",qty:"",remarks:"",locked:false
+    };
+
     data.push(r);
 
     let tr=document.createElement("tr");
@@ -264,31 +281,40 @@ function addRow(v=null){
         <td><input value="${r.qty}"></td>
         <td><input value="${r.remarks}"></td>
     `;
+
     if(r.locked){
         tr.classList.add("locked");
         tr.querySelectorAll("input").forEach(i=>i.disabled=true);
     }
+
     tbody.appendChild(tr);
 }
 
-/* SAVE ROWS */
+/* SAVE ONLY NON-EMPTY ROWS */
 function saveRows(){
     let rows=document.querySelectorAll("#tbody tr");
+
     rows.forEach((tr,i)=>{
         let inp=tr.querySelectorAll("input");
-        data[i]={
-            item:inp[0].value,
-            batch:inp[1].value,
-            rec:inp[2].value,
-            mfg:inp[3].value,
-            exp:inp[4].value,
-            shelf:inp[5].value,
-            qty:inp[6].value,
-            remarks:inp[7].value,
-            locked:true
-        };
-        tr.classList.add("locked");
-        inp.forEach(a=>a.disabled=true);
+
+        let hasData = [...inp].some(x => x.value.trim() !== "");
+
+        if(hasData){
+            data[i]={
+                item:inp[0].value,
+                batch:inp[1].value,
+                rec:inp[2].value,
+                mfg:inp[3].value,
+                exp:inp[4].value,
+                shelf:inp[5].value,
+                qty:inp[6].value,
+                remarks:inp[7].value,
+                locked:true
+            };
+
+            tr.classList.add("locked");
+            inp.forEach(a=>a.disabled=true);
+        }
     });
 
     localStorage.setItem(STORAGE, JSON.stringify({
@@ -301,7 +327,7 @@ function saveRows(){
         rows:data
     }));
 
-    alert("Saved & Locked!");
+    alert("Saved! Only filled rows locked.");
 }
 
 /* RESET */
@@ -334,7 +360,7 @@ window.onload=()=>{
 async function downloadPDF(){
     const { jsPDF }=window.jspdf;
 
-    // sync unsaved
+    // sync latest data
     document.querySelectorAll("#tbody tr").forEach((tr,i)=>{
         let inp=tr.querySelectorAll("input");
         data[i].item=inp[0].value;
@@ -362,8 +388,8 @@ async function downloadPDF(){
     }
 
     const pdf=new jsPDF({orientation:"landscape",unit:"mm",format:"a4",compress:true});
-
     const container=document.getElementById("pdfPages");
+
     container.style.visibility="visible";
     container.style.left="0px";
     container.style.top="0px";
@@ -375,29 +401,33 @@ async function downloadPDF(){
         container.appendChild(page);
 
         page.innerHTML=`
-            <div style="display:flex;align-items:center;border-bottom:1px solid #000;padding-bottom:6px;margin-bottom:6px;">
-                <img src="logo.png" style="width:115px;margin-right:18px;">
-                <div style="width:100%;text-align:center;">
-                    <div style="font-size:16px;font-weight:bold;">Dry Store Stock Record</div>
-                    <div style="font-size:11px;line-height:1.2;margin-top:3px;">
-                        Release ID: CQAG-DSSR / 1.1.0 / 01-Jan-2023 | C3: Private | Controlled Copy<br>
-                        Project ID: &lt;Project ID&gt; / &lt;SCL-ID&gt; / Ver - &lt;No&gt;
+            <div style="border:1px solid #000;padding:8px;margin-bottom:8px;">
+
+                <div style="display:flex;align-items:center;border-bottom:1px solid #000;padding-bottom:6px;margin-bottom:6px;">
+                    <img src="logo.png" style="width:115px;margin-right:18px;">
+                    <div style="width:100%;text-align:center;">
+                        <div style="font-size:16px;font-weight:bold;">Dry Store Stock Record</div>
+                        <div style="font-size:11px;line-height:1.2;margin-top:3px;">
+                            Release ID: CQAG-DSSR / 1.1.0 / 01-Jan-2023 | C3: Private | Controlled Copy<br>
+                            Project ID: &lt;Project ID&gt; / &lt;SCL-ID&gt; / Ver - &lt;No&gt;
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px;">
-                <tr>
-                    <td style="border:1px solid #000;padding:5px;">Date: ${head.date}</td>
-                    <td style="border:1px solid #000;padding:5px;">Vendor: ${head.vendor}</td>
-                    <td style="border:1px solid #000;padding:5px;">Supervisor: ${head.supervisor}</td>
-                </tr>
-                <tr>
-                    <td style="border:1px solid #000;padding:5px;">Building: ${head.building}</td>
-                    <td style="border:1px solid #000;padding:5px;">Floor: ${head.floor}</td>
-                    <td style="border:1px solid #000;padding:5px;">Counter: ${head.counter}</td>
-                </tr>
-            </table>
+                <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px;">
+                    <tr>
+                        <td style="border:1px solid #000;padding:5px;">Date: ${head.date}</td>
+                        <td style="border:1px solid #000;padding:5px;">Vendor: ${head.vendor}</td>
+                        <td style="border:1px solid #000;padding:5px;">Supervisor: ${head.supervisor}</td>
+                    </tr>
+                    <tr>
+                        <td style="border:1px solid #000;padding:5px;">Building: ${head.building}</td>
+                        <td style="border:1px solid #000;padding:5px;">Floor: ${head.floor}</td>
+                        <td style="border:1px solid #000;padding:5px;">Counter: ${head.counter}</td>
+                    </tr>
+                </table>
+
+            </div>
 
             <table style="width:100%;border-collapse:collapse;font-size:12px;">
                 <thead>
