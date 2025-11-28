@@ -141,6 +141,7 @@
         padding: 10px 14px;
         border: none;
         border-radius: 6px;
+        cursor: pointer;
     }
 
     .save { background: #28a745; }
@@ -183,12 +184,18 @@
             </div>
         </div>
 
-        <!-- TOP INPUT ROW -->
+        <!-- TOP INPUT ROWS -->
         <table class="top-table">
             <tr>
                 <td style="width:33%">Date: <input type="date" id="date"></td>
                 <td style="width:33%">Vendor Name: <input id="vendor"></td>
                 <td style="width:33%">Vendor Supervisor Name: <input id="supervisor"></td>
+            </tr>
+
+            <tr>
+                <td>Building: <input id="building"></td>
+                <td>Floor: <input id="floor"></td>
+                <td>Counter: <input id="counter"></td>
             </tr>
         </table>
 
@@ -230,96 +237,89 @@
 
 </div>
 
+<!-- PDF pages hidden container -->
 <div id="pdfPages"></div>
 
 <script>
-let data = [];
-const STORAGE_KEY = "dry_store_final_2025";
-const ROWS_PER_PAGE = 13;
+let data=[];
+const STORAGE="cts_final_v3";
+const ROWS=13;
 
-function addRow(values=null) {
-    const tbody = document.getElementById("tbody");
-    const row = document.createElement("tr");
+function addRow(v=null){
+    let tbody=document.getElementById("tbody");
+    let index=data.length+1;
+    let r=v||{item:"",batch:"",rec:"",mfg:"",exp:"",shelf:"",qty:"",remarks:"",locked:false};
+    data.push(r);
 
-    const index = data.length + 1;
-
-    const rowData = values || {
-        item:"",
-        batch:"",
-        rec:"",
-        mfg:"",
-        exp:"",
-        shelf:"",
-        qty:"",
-        remarks:"",
-        locked:false
-    };
-
-    data.push(rowData);
-
-    const inputs = `
+    let tr=document.createElement("tr");
+    tr.innerHTML=`
         <td>${index}</td>
-        <td><input value="${rowData.item}"></td>
-        <td><input value="${rowData.batch}"></td>
-        <td><input type="date" value="${rowData.rec}"></td>
-        <td><input type="date" value="${rowData.mfg}"></td>
-        <td><input type="date" value="${rowData.exp}"></td>
-        <td><input value="${rowData.shelf}"></td>
-        <td><input value="${rowData.qty}"></td>
-        <td><input value="${rowData.remarks}"></td>
+        <td><input value="${r.item}"></td>
+        <td><input value="${r.batch}"></td>
+        <td><input type="date" value="${r.rec}"></td>
+        <td><input type="date" value="${r.mfg}"></td>
+        <td><input type="date" value="${r.exp}"></td>
+        <td><input value="${r.shelf}"></td>
+        <td><input value="${r.qty}"></td>
+        <td><input value="${r.remarks}"></td>
     `;
-
-    row.innerHTML = inputs;
-    if (rowData.locked) row.classList.add("locked");
-
-    tbody.appendChild(row);
+    if(r.locked) {
+        tr.classList.add("locked");
+        tr.querySelectorAll("input").forEach(i=>i.disabled=true);
+    }
+    tbody.appendChild(tr);
 }
 
-function saveRows() {
-    const tbody = document.querySelectorAll("#tbody tr");
-
-    tbody.forEach((tr,i)=>{
-        let tds = tr.querySelectorAll("input");
-        data[i] = {
-            item: tds[0].value,
-            batch: tds[1].value,
-            rec: tds[2].value,
-            mfg: tds[3].value,
-            exp: tds[4].value,
-            shelf: tds[5].value,
-            qty: tds[6].value,
-            remarks: tds[7].value,
-            locked: true
+function saveRows(){
+    let rows=document.querySelectorAll("#tbody tr");
+    rows.forEach((tr,i)=>{
+        let inp=tr.querySelectorAll("input");
+        data[i]={
+            item:inp[0].value,
+            batch:inp[1].value,
+            rec:inp[2].value,
+            mfg:inp[3].value,
+            exp:inp[4].value,
+            shelf:inp[5].value,
+            qty:inp[6].value,
+            remarks:inp[7].value,
+            locked:true
         };
         tr.classList.add("locked");
-        tds.forEach(i=>i.disabled=true);
+        inp.forEach(a=>a.disabled=true);
     });
 
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    localStorage.setItem(STORAGE, JSON.stringify({
         date:date.value,
         vendor:vendor.value,
         supervisor:supervisor.value,
+        building:building.value,
+        floor:floor.value,
+        counter:counter.value,
         rows:data
     }));
 
     alert("Saved & Locked!");
 }
 
-function resetAll() {
-    if(!confirm("Clear everything?")) return;
+function resetAll(){
+    if(!confirm("Clear all?"))return;
     data=[];
     document.getElementById("tbody").innerHTML="";
-    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(STORAGE);
 }
 
-window.onload = ()=>{
-    const saved = localStorage.getItem(STORAGE_KEY);
+window.onload=()=>{
+    const saved=localStorage.getItem(STORAGE);
     if(saved){
-        const obj = JSON.parse(saved);
-        date.value=obj.date;
-        vendor.value=obj.vendor;
-        supervisor.value=obj.supervisor;
-        obj.rows.forEach(r=>addRow(r));
+        let o=JSON.parse(saved);
+        date.value=o.date;
+        vendor.value=o.vendor;
+        supervisor.value=o.supervisor;
+        building.value=o.building;
+        floor.value=o.floor;
+        counter.value=o.counter;
+        o.rows.forEach(r=>addRow(r));
     } else {
         addRow();
         addRow();
@@ -328,95 +328,95 @@ window.onload = ()=>{
 
 /* PDF EXPORT */
 async function downloadPDF(){
-    const { jsPDF } = window.jspdf;
+    const { jsPDF }=window.jspdf;
 
-    const header = {
+    // sync
+    document.querySelectorAll("#tbody tr").forEach((tr,i)=>{
+        const inp=tr.querySelectorAll("input");
+        data[i].item=inp[0].value;
+        data[i].batch=inp[1].value;
+        data[i].rec=inp[2].value;
+        data[i].mfg=inp[3].value;
+        data[i].exp=inp[4].value;
+        data[i].shelf=inp[5].value;
+        data[i].qty=inp[6].value;
+        data[i].remarks=inp[7].value;
+    });
+
+    const head={
         date:date.value,
         vendor:vendor.value,
-        supervisor:supervisor.value
+        supervisor:supervisor.value,
+        building:building.value,
+        floor:floor.value,
+        counter:counter.value
     };
 
-    // sync unsaved rows
-    const trs = document.querySelectorAll("#tbody tr");
-    trs.forEach((tr,i)=>{
-        const ins = tr.querySelectorAll("input");
-        data[i].item = ins[0].value;
-        data[i].batch = ins[1].value;
-        data[i].rec = ins[2].value;
-        data[i].mfg = ins[3].value;
-        data[i].exp = ins[4].value;
-        data[i].shelf = ins[5].value;
-        data[i].qty = ins[6].value;
-        data[i].remarks = ins[7].value;
-    });
-
-    let pages = [];
-    for(let i=0; i<data.length; i+=ROWS_PER_PAGE){
-        pages.push(data.slice(i, i+ROWS_PER_PAGE));
+    let pages=[];
+    for(let i=0;i<data.length;i+=ROWS){
+        pages.push(data.slice(i,i+ROWS));
     }
 
-    const pdf = new jsPDF({
-        orientation:'landscape',
-        unit:'mm',
-        format:'a4',
-        compress:true
-    });
-
-    const container = document.getElementById("pdfPages");
+    const pdf=new jsPDF({orientation:"landscape",unit:"mm",format:"a4",compress:true});
+    const container=document.getElementById("pdfPages");
     container.innerHTML="";
 
-    for(let p=0; p<pages.length; p++){
-        const page = document.createElement("div");
+    for(let p=0;p<pages.length;p++){
+        const page=document.createElement("div");
         page.className="page";
         container.appendChild(page);
 
-        // BUILD EXACT PAGE
-        page.innerHTML = `
-            <div style="display:flex;align-items:center;border-bottom:1px solid #000;padding-bottom:8px;margin-bottom:8px;">
-                <img src="logo.png" style="width:110px;margin-right:15px;">
+        page.innerHTML=`
+            <div style="display:flex;align-items:center;border-bottom:1px solid #000;padding-bottom:6px;margin-bottom:6px;">
+                <img src="logo.png" style="width:115px;margin-right:18px;">
                 <div style="width:100%;text-align:center;">
                     <div style="font-size:16px;font-weight:bold;">Dry Store Stock Record</div>
-                    <div style="font-size:11px;margin-top:3px;">
-                        Release ID: CQAG-DSSR / 1.1.0 / 01-Jan-2023 | C3: Private | Controlled Copy<br>
-                        Project ID: &lt;Project ID&gt; / &lt;SCL-ID&gt; / Ver - &lt;No&gt;
+                    <div style="font-size:11px;line-height:1.2;margin-top:3px;">
+                    Release ID: CQAG-DSSR / 1.1.0 / 01-Jan-2023 | C3: Private | Controlled Copy<br>
+                    Project ID: &lt;Project ID&gt; / &lt;SCL-ID&gt; / Ver - &lt;No&gt;
                     </div>
                 </div>
             </div>
 
-            <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px;">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px;">
                 <tr>
-                    <td style="border:1px solid #000;padding:5px;">Date: ${header.date}</td>
-                    <td style="border:1px solid #000;padding:5px;">Vendor Name: ${header.vendor}</td>
-                    <td style="border:1px solid #000;padding:5px;">Vendor Supervisor Name: ${header.supervisor}</td>
+                    <td style="border:1px solid #000;padding:5px;">Date: ${head.date}</td>
+                    <td style="border:1px solid #000;padding:5px;">Vendor: ${head.vendor}</td>
+                    <td style="border:1px solid #000;padding:5px;">Supervisor: ${head.supervisor}</td>
+                </tr>
+                <tr>
+                    <td style="border:1px solid #000;padding:5px;">Building: ${head.building}</td>
+                    <td style="border:1px solid #000;padding:5px;">Floor: ${head.floor}</td>
+                    <td style="border:1px solid #000;padding:5px;">Counter: ${head.counter}</td>
                 </tr>
             </table>
 
             <table style="width:100%;border-collapse:collapse;font-size:12px;">
                 <thead>
                     <tr>
-                        <th style="border:1px solid #000;padding:5px;width:40px;">S.No</th>
+                        <th style="border:1px solid #000;padding:5px;">S.No</th>
                         <th style="border:1px solid #000;padding:5px;">Items</th>
                         <th style="border:1px solid #000;padding:5px;">Batch No</th>
                         <th style="border:1px solid #000;padding:5px;">Receiving Date</th>
                         <th style="border:1px solid #000;padding:5px;">Manufacturing Date</th>
                         <th style="border:1px solid #000;padding:5px;">Expiry Date</th>
                         <th style="border:1px solid #000;padding:5px;">Shelf Life</th>
-                        <th style="border:1px solid #000;padding:5px;">Stock Qty</th>
+                        <th style="border:1px solid #000;padding:5px;">Qty</th>
                         <th style="border:1px solid #000;padding:5px;">Remarks</th>
                     </tr>
                 </thead>
                 <tbody>
                     ${pages[p].map((r,i)=>`
                         <tr>
-                            <td style="border:1px solid #000;padding:5px;">${(p*ROWS_PER_PAGE)+i+1}</td>
-                            <td style="border:1px solid #000;padding:5px;">${r.item}</td>
-                            <td style="border:1px solid #000;padding:5px;">${r.batch}</td>
-                            <td style="border:1px solid #000;padding:5px;">${r.rec}</td>
-                            <td style="border:1px solid #000;padding:5px;">${r.mfg}</td>
-                            <td style="border:1px solid #000;padding:5px;">${r.exp}</td>
-                            <td style="border:1px solid #000;padding:5px;">${r.shelf}</td>
-                            <td style="border:1px solid #000;padding:5px;">${r.qty}</td>
-                            <td style="border:1px solid #000;padding:5px;">${r.remarks}</td>
+                            <td style="border:1px solid #000;padding:4px;">${(p*ROWS)+i+1}</td>
+                            <td style="border:1px solid #000;padding:4px;">${r.item}</td>
+                            <td style="border:1px solid #000;padding:4px;">${r.batch}</td>
+                            <td style="border:1px solid #000;padding:4px;">${r.rec}</td>
+                            <td style="border:1px solid #000;padding:4px;">${r.mfg}</td>
+                            <td style="border:1px solid #000;padding:4px;">${r.exp}</td>
+                            <td style="border:1px solid #000;padding:4px;">${r.shelf}</td>
+                            <td style="border:1px solid #000;padding:4px;">${r.qty}</td>
+                            <td style="border:1px solid #000;padding:4px;">${r.remarks}</td>
                         </tr>
                     `).join("")}
                 </tbody>
@@ -436,11 +436,11 @@ async function downloadPDF(){
             else img.onload=res;
         });
 
-        const canvas = await html2canvas(page, {scale:1.4});
-        const img = canvas.toDataURL('image/jpeg',0.62);
+        const canvas=await html2canvas(page,{scale:1.4});
+        const img=canvas.toDataURL("image/jpeg",0.62);
 
         if(p>0) pdf.addPage();
-        pdf.addImage(img, "JPEG", 0, 0, 297, 210);
+        pdf.addImage(img,"JPEG",0,0,297,210);
 
         container.innerHTML="";
     }
