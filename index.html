@@ -13,114 +13,183 @@
     body {
         font-family: Arial, sans-serif;
         background: #f4f4f4;
-        padding: 20px;
+        margin: 0;
+        padding: 10px;
     }
-    .container {
+
+    .wrapper {
         max-width: 1100px;
         margin: auto;
+    }
+
+    .cts-sheet {
         background: white;
         padding: 20px;
         border: 1px solid #000;
+        box-sizing: border-box;
     }
 
-    /* Header */
-    .header {
+    /* HEADER */
+    .cts-header {
         display: flex;
         align-items: center;
         border-bottom: 1px solid #000;
         padding-bottom: 10px;
-        margin-bottom: 15px;
     }
-    .header img {
+    .cts-header img {
         width: 130px;
         margin-right: 20px;
     }
-    .header-title {
-        font-size: 20px;
-        font-weight: bold;
-        text-align: center;
+    .cts-header-text {
         width: 100%;
+        font-size: 16px;
+        text-align: center;
+        font-weight: bold;
+    }
+    .cts-sub {
+        font-size: 11px;
+        text-align: center;
+        margin-top: -4px;
+        line-height: 1.2;
     }
 
+    /* TABLES */
     table {
         width: 100%;
         border-collapse: collapse;
-        margin-top: 12px;
+        margin-top: 10px;
     }
     th, td {
         border: 1px solid #000;
-        padding: 6px;
+        padding: 5px;
+        font-size: 12px;
         text-align: center;
-        font-size: 14px;
     }
     input {
         width: 100%;
-        padding: 4px;
         border: none;
         outline: none;
+        padding: 3px;
+        font-size: 12px;
         text-align: center;
     }
 
-    .btn-box {
-        margin-top: 20px;
+    /* MOBILE FIX: SCROLL TABLE */
+    .table-scroll {
+        overflow-x: auto;
+        width: 100%;
+    }
+
+    /* BUTTONS */
+    .btn-row {
+        margin-top: 15px;
         display: flex;
         gap: 10px;
         flex-wrap: wrap;
     }
     button {
-        padding: 10px 15px;
+        padding: 10px 14px;
         border: none;
-        font-size: 15px;
         cursor: pointer;
+        font-size: 15px;
         border-radius: 6px;
-        color: #fff;
+        color: white;
     }
     .add { background: #007bff; }
     .save { background: #28a745; }
     .reset { background: #dc3545; }
     .pdf { background: #6f42c1; }
+
+    /* --------- PDF PRINT FORMAT (A4 EXACT LAYOUT) --------- */
+    @media print {
+        body {
+            margin: 0;
+            background: white;
+        }
+        .btn-row { display: none; }
+        .wrapper {
+            width: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        .cts-sheet {
+            width: 210mm;
+            min-height: 297mm;
+            padding: 20mm;
+            border: none;
+            page-break-after: always;
+        }
+        input {
+            border: none;
+        }
+        .table-scroll {
+            overflow: visible !important;
+        }
+    }
 </style>
 </head>
 
 <body>
 
-<div id="recordArea" class="container">
+<div class="wrapper">
 
-    <!-- Header with Logo -->
-    <div class="header">
-        <img src="logo.png" alt="Cognizant Logo">
-        <div class="header-title">Dry Store Stock Record</div>
+    <div id="sheet" class="cts-sheet">
+
+        <!-- CTS HEADER -->
+        <div class="cts-header">
+            <img src="logo.png">
+            <div>
+                <div class="cts-header-text">
+                    Dry Store Stock Record - Dry Store Stock Record
+                </div>
+                <div class="cts-sub">
+                    Release ID: CQAG-DSSR / 1.1.0 / 01-Jan-2023 | C3: Private | Controlled Copy<br>
+                    Project ID: &lt;Project ID&gt; / &lt;SCL-ID&gt; / Ver – &lt;No&gt;
+                </div>
+            </div>
+        </div>
+
+        <!-- TOP ROW -->
+        <table>
+            <tr>
+                <td>Date: <input id="date"></td>
+                <td>Vendor Name: <input id="vendor"></td>
+                <td>Vendor Supervisor: <input id="supervisor"></td>
+            </tr>
+        </table>
+
+        <!-- MAIN TABLE -->
+        <div class="table-scroll">
+            <table id="stockTable">
+                <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>Items</th>
+                    <th>Batch No</th>
+                    <th>Receiving Date</th>
+                    <th>Mfg Date</th>
+                    <th>Expiry Date</th>
+                    <th>Shelf Life</th>
+                    <th>Stock Qty</th>
+                    <th>Remarks</th>
+                </tr>
+                </thead>
+                <tbody id="tableBody"></tbody>
+            </table>
+        </div>
+
+        <!-- FOOTER -->
+        <table style="margin-top: 10px;">
+            <tr>
+                <td>Vendor PoC:</td>
+                <td>Verified by F&B team:</td>
+            </tr>
+        </table>
+
     </div>
 
-    <!-- Top Info -->
-    <table>
-        <tr>
-            <td>Date: <input id="date"></td>
-            <td>Vendor Name: <input id="vendor"></td>
-            <td>Supervisor: <input id="supervisor"></td>
-        </tr>
-    </table>
-
-    <!-- Main Table -->
-    <table id="stockTable">
-        <thead>
-            <tr>
-                <th>S.No</th>
-                <th>Item</th>
-                <th>Batch No</th>
-                <th>Receiving Date</th>
-                <th>Mfg Date</th>
-                <th>Expiry Date</th>
-                <th>Shelf Life</th>
-                <th>Stock Qty</th>
-                <th>Remarks</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-    </table>
-
-    <!-- Buttons -->
-    <div class="btn-box">
+    <!-- BUTTON BAR -->
+    <div class="btn-row">
         <button class="add" onclick="addRow()">Add Row</button>
         <button class="save" onclick="saveData()">Save</button>
         <button class="pdf" onclick="downloadPDF()">Download PDF</button>
@@ -129,124 +198,120 @@
 
 </div>
 
-
 <script>
-/* ---------------------------
+/* -------------------------------
    ADD ROW
----------------------------- */
+--------------------------------*/
 function addRow() {
     const tbody = document.getElementById("tableBody");
-    const rowCount = tbody.rows.length + 1;
-
-    const row = `
-    <tr>
-        <td>${rowCount}</td>
-        <td><input></td>
-        <td><input></td>
-        <td><input type="date"></td>
-        <td><input type="date"></td>
-        <td><input type="date"></td>
-        <td><input></td>
-        <td><input></td>
-        <td><input></td>
-    </tr>
-    `;
-    tbody.insertAdjacentHTML("beforeend", row);
+    const n = tbody.rows.length + 1;
+    tbody.insertAdjacentHTML("beforeend", `
+        <tr>
+            <td>${n}</td>
+            <td><input></td>
+            <td><input></td>
+            <td><input type="date"></td>
+            <td><input type="date"></td>
+            <td><input type="date"></td>
+            <td><input></td>
+            <td><input></td>
+            <td><input></td>
+        </tr>
+    `);
 }
 
-/* ---------------------------
-   SAVE → LOCK ALL FIELDS
----------------------------- */
+/* -------------------------------
+   SAVE (LOCK FIELDS)
+--------------------------------*/
 function saveData() {
-    const data = {
+    let data = {
         date: date.value,
         vendor: vendor.value,
         supervisor: supervisor.value,
         rows: []
     };
 
-    document.querySelectorAll("#tableBody tr").forEach(row => {
-        const inputs = row.querySelectorAll("input");
+    document.querySelectorAll("#tableBody tr").forEach(r => {
+        const i = r.querySelectorAll("input");
         data.rows.push({
-            item: inputs[0].value,
-            batch: inputs[1].value,
-            receiving: inputs[2].value,
-            mfg: inputs[3].value,
-            exp: inputs[4].value,
-            shelf: inputs[5].value,
-            qty: inputs[6].value,
-            remarks: inputs[7].value
+            item: i[0].value,
+            batch: i[1].value,
+            receiving: i[2].value,
+            mfg: i[3].value,
+            exp: i[4].value,
+            shelf: i[5].value,
+            qty: i[6].value,
+            remarks: i[7].value
         });
     });
 
-    localStorage.setItem("dryStockRecord", JSON.stringify(data));
+    localStorage.setItem("ctsForm", JSON.stringify(data));
 
-    // Lock all
+    // Lock everything
     document.querySelectorAll("input").forEach(i => i.disabled = true);
 
-    alert("Saved successfully!");
+    alert("Saved!");
 }
 
-/* ---------------------------
-   RESET ALL + UNLOCK FIELDS
----------------------------- */
+/* -------------------------------
+   RESET FORM
+--------------------------------*/
 function resetData() {
     if (!confirm("Clear all data?")) return;
-
-    localStorage.removeItem("dryStockRecord");
+    localStorage.removeItem("ctsForm");
     location.reload();
 }
 
-/* ---------------------------
-   DOWNLOAD PDF
----------------------------- */
+/* -------------------------------
+   PDF EXPORT (A4 EXACT CTS STYLE)
+--------------------------------*/
 async function downloadPDF() {
+    const element = document.getElementById("sheet");
     const { jsPDF } = window.jspdf;
 
-    const element = document.getElementById("recordArea");
+    // Use PRINT stylesheet layout
+    window.scrollTo(0, 0);
 
-    const canvas = await html2canvas(element, { scale: 2 });
-    const imgData = canvas.toDataURL("image/png");
+    const canvas = await html2canvas(element, { scale: 3 });
+    const img = canvas.toDataURL("image/png");
 
     const pdf = new jsPDF("p", "mm", "a4");
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
 
-    pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
-    pdf.save("Dry_Store_Record.pdf");
+    const pdfW = 210;
+    const pdfH = (canvas.height * 210) / canvas.width;
+
+    pdf.addImage(img, "PNG", 0, 0, pdfW, pdfH);
+    pdf.save("Dry_Store_Record_CTS_Format.pdf");
 }
 
-/* ---------------------------
-   LOAD LAST SAVED DATA
----------------------------- */
+/* -------------------------------
+   LOAD SAVED DATA
+--------------------------------*/
 window.onload = () => {
-    const saved = localStorage.getItem("dryStockRecord");
+    const saved = localStorage.getItem("ctsForm");
     if (!saved) {
-        addRow();
-        addRow();
+        addRow(); addRow();
         return;
     }
 
     const data = JSON.parse(saved);
-
     date.value = data.date;
     vendor.value = data.vendor;
     supervisor.value = data.supervisor;
 
     data.rows.forEach(r => {
         addRow();
-        const row = document.querySelectorAll("#tableBody tr:last-child input");
-        row[0].value = r.item;
-        row[1].value = r.batch;
-        row[2].value = r.receiving;
-        row[3].value = r.mfg;
-        row[4].value = r.exp;
-        row[5].value = r.shelf;
-        row[6].value = r.qty;
-        row[7].value = r.remarks;
+        let last = document.querySelector("#tableBody tr:last-child").querySelectorAll("input");
+        last[0].value = r.item;
+        last[1].value = r.batch;
+        last[2].value = r.receiving;
+        last[3].value = r.mfg;
+        last[4].value = r.exp;
+        last[5].value = r.shelf;
+        last[6].value = r.qty;
+        last[7].value = r.remarks;
     });
 
-    // Lock after loading
     document.querySelectorAll("input").forEach(i => i.disabled = true);
 };
 </script>
