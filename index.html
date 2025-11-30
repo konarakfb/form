@@ -474,8 +474,8 @@ async function downloadPDF(){
             else img.onload=res;
         });
 
-        const canvas=await html2canvas(page,{scale:1.4});
-        const img=canvas.toDataURL("image/jpeg",0.62);
+        const canvas=await html2canvas(page,{scale:2.2});
+        const img=canvas.toDataURL("image/jpeg",0.85);
 
         if(p>0) pdf.addPage();
         pdf.addImage(img,"JPEG",0,0,297,210);
