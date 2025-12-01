@@ -22,27 +22,13 @@
         margin: auto;
     }
 
-    .sheet {
-        background: #fff;
-        border: 1px solid #000;
-        padding: 18px;
-    }
+    .sheet {background:#fff;border:1px solid #000;padding:18px;border-radius:14px;box-shadow:0 2px 6px rgba(0,0,0,0.08);}
 
     /* FULL HEADER BOX */
-    .header-box {
-        border: 1px solid #000;
-        padding: 10px;
-        margin-bottom: 12px;
-    }
+    .header-box {border:1px solid #000;padding:14px;border-radius:14px;background:#ffffff;margin-bottom:16px;}
 
     /* HEADER */
-    .header {
-        display: flex;
-        align-items: center;
-        border-bottom: 1px solid #000;
-        padding-bottom: 10px;
-        margin-bottom: 10px;
-    }
+    .header {display:flex;align-items:center;border-bottom:1px solid #ccc;padding-bottom:10px;margin-bottom:10px;}
 
     .header img {
         width: 130px;
@@ -54,13 +40,6 @@
         font-weight: bold;
         text-align: center;
         width: 100%;
-    }
-
-    .header-sub {
-        text-align: center;
-        margin-top: 3px;
-        font-size: 12px;
-        line-height: 1.2;
     }
 
     /* TOP FIELDS */
@@ -84,34 +63,41 @@
         box-sizing: border-box;
     }
 
-    /* BODY TABLE */
+    /* TABLE WRAPPER — fixed to prevent circle overflow */
     .table-wrap {
-        width: 100%;
-        overflow-x: auto;
+        width:100%;
+        overflow-x:auto;
+        border:1px solid #000;
+        padding:12px;              /* reduced to fit inside rounded corners */
+        border-radius:14px;
+        background:#ffffff;
+        margin-bottom:16px;
+        box-sizing:border-box;     /* added to contain padding inside border */
     }
 
     .main-table {
-        width: 1400px;
-        border-collapse: collapse;
-        table-layout: fixed;
+        width:max-content;
+        min-width:100%;
+        border-collapse:collapse;
+        background:#fff;
+        margin:0;                  /* ensure table sits inside wrapper curve */
     }
 
-    .main-table th,
-    .main-table td {
-        border: 1px solid #000;
-        padding: 6px 5px;
-        text-align: center;
-        font-size: 13px;
+    .main-table th, .main-table td {
+        border:1px solid #000;
+        padding:6px;
+        text-align:center;
+        font-size:12px;
     }
 
     .main-table input {
-        width: 100%;
-        border: none;
-        outline: none;
-        padding: 4px;
-        font-size: 13px;
-        text-align: center;
-        box-sizing: border-box;
+        width:100%;
+        border:none;
+        outline:none;
+        padding:2px;
+        font-size:12px;
+        text-align:center;
+        box-sizing:border-box;
     }
 
     .locked input {
@@ -127,9 +113,10 @@
     }
 
     .bottom-table td {
-        border: 1px solid #000;
-        padding: 6px;
-        font-size: 14px;
+        border:1px solid #000;
+        padding:10px;
+        font-size:14px;
+        background:#ffffff;
     }
 
     /* BUTTONS */
@@ -178,27 +165,22 @@
 
     <div class="sheet" id="sheet">
 
-        <!-- HEADER ENCLOSED IN BIG BOX -->
+        <!-- HEADER BOX (website only: no metadata here) -->
         <div class="header-box">
 
-            <!-- HEADER -->
             <div class="header">
                 <img src="logo.png" alt="logo">
                 <div style="width:100%;">
                     <div class="header-title">Dry Store Stock Record</div>
-                    <div class="header-sub">
-                        Release ID: CQAG-DSSR / 1.1.0 / 01-Jan-2023 | C3: Private | Controlled Copy <br>
-                        Project ID: &lt;Project ID&gt; / &lt;SCL-ID&gt; / Ver - &lt;No&gt;
-                    </div>
                 </div>
             </div>
 
-            <!-- TOP INPUT ROWS -->
+            <!-- TOP INPUT -->
             <table class="top-table">
                 <tr>
-                    <td style="width:33%">Date: <input type="date" id="date"></td>
-                    <td style="width:33%">Vendor Name: <input id="vendor"></td>
-                    <td style="width:33%">Vendor Supervisor Name: <input id="supervisor"></td>
+                    <td>Date: <input type="date" id="date"></td>
+                    <td>Vendor Name: <input id="vendor"></td>
+                    <td>Vendor Supervisor Name: <input id="supervisor"></td>
                 </tr>
 
                 <tr>
@@ -209,33 +191,32 @@
             </table>
 
         </div>
-        <!-- END HEADER BOX -->
 
         <!-- MAIN TABLE -->
         <div class="table-wrap">
             <table class="main-table" id="mainTable">
                 <thead>
                     <tr>
-                        <th style="width:50px">S.No</th>
-                        <th style="width:220px">Items</th>
-                        <th style="width:160px">Batch No</th>
-                        <th style="width:150px">Receiving Date</th>
-                        <th style="width:150px">Manufacturing Date</th>
-                        <th style="width:140px">Expiry Date</th>
-                        <th style="width:100px">Shelf Life</th>
-                        <th style="width:130px">Stock Quantity</th>
-                        <th style="width:200px">Remarks</th>
+                        <th style="width:50px;">S.No</th>
+                        <th style="width:220px;">Items</th>
+                        <th style="width:160px;">Batch No</th>
+                        <th style="width:150px;">Receiving Date</th>
+                        <th style="width:150px;">Manufacturing Date</th>
+                        <th style="width:140px;">Expiry Date</th>
+                        <th style="width:100px;">Shelf Life</th>
+                        <th style="width:130px;">Stock Quantity</th>
+                        <th style="width:200px;">Remarks</th>
+                        <th style="width:90px;">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="tbody"></tbody>
             </table>
         </div>
 
-        <!-- FOOTER -->
         <table class="bottom-table">
             <tr>
-                <td style="width:50%">Vendor PoC :</td>
-                <td style="width:50%">Verified by F&B team :</td>
+                <td>Vendor PoC :</td>
+                <td>Verified by F&B team :</td>
             </tr>
         </table>
     </div>
@@ -249,13 +230,21 @@
 
 </div>
 
-<!-- PDF pages hidden container -->
+<!-- PDF render container (hidden) -->
 <div id="pdfPages"></div>
 
 <script>
 let data=[];
 const STORAGE="cts_v5";
 const ROWS=13;
+
+/* RENUMBER AFTER DELETE */
+function renumberRows(){
+    const rows=document.querySelectorAll("#tbody tr");
+    rows.forEach((tr,i)=>{
+        tr.children[0].innerText = i + 1;
+    });
+}
 
 /* ADD ROW */
 function addRow(v=null){
@@ -271,33 +260,85 @@ function addRow(v=null){
 
     let tr=document.createElement("tr");
     tr.innerHTML=`
-        <td>${index}</td>
-        <td><input value="${r.item}"></td>
-        <td><input value="${r.batch}"></td>
-        <td><input type="date" value="${r.rec}"></td>
-        <td><input type="date" value="${r.mfg}"></td>
-        <td><input type="date" value="${r.exp}"></td>
-        <td><input value="${r.shelf}"></td>
-        <td><input value="${r.qty}"></td>
-        <td><input value="${r.remarks}"></td>
-    `;
+<td>${index}</td>
+<td><input value="${r.item}"></td>
+<td><input value="${r.batch}"></td>
+<td><input type="date" value="${r.rec}"></td>
+<td><input type="date" value="${r.mfg}"></td>
+<td><input type="date" value="${r.exp}"></td>
+<td><input value="${r.shelf}"></td>
+<td><input value="${r.qty}"></td>
+<td><input value="${r.remarks}"></td>
 
+<td>
+    <button class="editbtn" style="background:none;border:none;font-size:18px;color:#007bff;cursor:pointer;">✎</button>
+    <button class="savebtn" style="display:none;background:none;border:none;font-size:18px;color:#28a745;cursor:pointer;">✔</button>
+    <button class="delbtn" style="background:none;border:none;font-size:20px;color:#dc3545;cursor:pointer;">✖</button>
+</td>
+`;
+
+    /* LOCKED MODE */
     if(r.locked){
         tr.classList.add("locked");
         tr.querySelectorAll("input").forEach(i=>i.disabled=true);
+        tr.querySelector('.editbtn').style.display="inline";
+        tr.querySelector('.savebtn').style.display="none";
     }
+
+    /* DELETE ROW */
+    tr.querySelector('.delbtn').addEventListener('click',()=>{
+        let index=[...tbody.children].indexOf(tr);
+        data.splice(index,1);
+        tr.remove();
+        renumberRows();
+    });
+
+    /* EDIT ROW */
+    tr.querySelector('.editbtn').addEventListener('click',()=>{
+        tr.classList.remove("locked");
+        tr.querySelectorAll("input").forEach(i=>i.disabled=false);
+
+        tr.querySelector('.editbtn').style.display="none";
+        tr.querySelector('.savebtn').style.display="inline";
+    });
+
+    /* SAVE EDITED ROW */
+    tr.querySelector('.savebtn').addEventListener('click',()=>{
+        let inp=tr.querySelectorAll("input");
+        let index=[...tbody.children].indexOf(tr);
+
+        data[index]={
+            item:inp[0].value,
+            batch:inp[1].value,
+            rec:inp[2].value,
+            mfg:inp[3].value,
+            exp:inp[4].value,
+            shelf:inp[5].value,
+            qty:inp[6].value,
+            remarks:inp[7].value,
+            locked:true
+        };
+
+        tr.classList.add("locked");
+        inp.forEach(i=>i.disabled=true);
+
+        tr.querySelector('.editbtn').style.display="inline";
+        tr.querySelector('.savebtn').style.display="none";
+
+        renumberRows();
+    });
 
     tbody.appendChild(tr);
 }
 
-/* SAVE ONLY NON-EMPTY ROWS */
+/* SAVE BUTTON (MAIN) */
 function saveRows(){
     let rows=document.querySelectorAll("#tbody tr");
 
     rows.forEach((tr,i)=>{
         let inp=tr.querySelectorAll("input");
 
-        let hasData = [...inp].some(x => x.value.trim() !== "");
+        let hasData=[...inp].some(x=>x.value.trim()!== "");
 
         if(hasData){
             data[i]={
@@ -314,6 +355,9 @@ function saveRows(){
 
             tr.classList.add("locked");
             inp.forEach(a=>a.disabled=true);
+
+            tr.querySelector('.editbtn').style.display="inline";
+            tr.querySelector('.savebtn').style.display="none";
         }
     });
 
@@ -327,7 +371,7 @@ function saveRows(){
         rows:data
     }));
 
-    alert("Saved! Only filled rows locked.");
+    alert("Saved & locked!");
 }
 
 /* RESET */
@@ -338,7 +382,7 @@ function resetAll(){
     localStorage.removeItem(STORAGE);
 }
 
-/* RESTORE */
+/* RESTORE SAVED DATA */
 window.onload=()=>{
     const saved=localStorage.getItem(STORAGE);
     if(saved){
@@ -356,7 +400,7 @@ window.onload=()=>{
     }
 }
 
-/* PDF EXPORT FIXED */
+/* PDF EXPORT — metadata included only inside the PDF (exact text as provided) */
 async function downloadPDF(){
     const { jsPDF }=window.jspdf;
 
@@ -400,6 +444,7 @@ async function downloadPDF(){
         page.className="page";
         container.appendChild(page);
 
+        /* --- NOTE: metadata below heading is EXACTLY as you provided --- */
         page.innerHTML=`
             <div style="border:1px solid #000;padding:8px;margin-bottom:8px;">
 
