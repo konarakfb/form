@@ -24,10 +24,8 @@
 
     .sheet {background:#fff;border:1px solid #000;padding:18px;border-radius:14px;box-shadow:0 2px 6px rgba(0,0,0,0.08);}
 
-    /* FULL HEADER BOX */
     .header-box {border:1px solid #000;padding:14px;border-radius:14px;background:#ffffff;margin-bottom:16px;}
 
-    /* HEADER */
     .header {display:flex;align-items:center;border-bottom:1px solid #ccc;padding-bottom:10px;margin-bottom:10px;}
 
     .header img {
@@ -42,7 +40,6 @@
         width: 100%;
     }
 
-    /* TOP FIELDS */
     .top-table {
         width: 100%;
         border-collapse: collapse;
@@ -63,16 +60,15 @@
         box-sizing: border-box;
     }
 
-    /* TABLE WRAPPER — fixed to prevent circle overflow */
     .table-wrap {
         width:100%;
         overflow-x:auto;
         border:1px solid #000;
-        padding:12px;              /* reduced to fit inside rounded corners */
+        padding:12px;
         border-radius:14px;
         background:#ffffff;
         margin-bottom:16px;
-        box-sizing:border-box;     /* added to contain padding inside border */
+        box-sizing:border-box;
     }
 
     .main-table {
@@ -80,7 +76,7 @@
         min-width:100%;
         border-collapse:collapse;
         background:#fff;
-        margin:0;                  /* ensure table sits inside wrapper curve */
+        margin:0;
     }
 
     .main-table th, .main-table td {
@@ -105,7 +101,6 @@
         color: #111;
     }
 
-    /* FOOTER */
     .bottom-table {
         width: 100%;
         border-collapse: collapse;
@@ -119,7 +114,6 @@
         background:#ffffff;
     }
 
-    /* BUTTONS */
     .controls {
         margin-top: 14px;
         display: flex;
@@ -141,7 +135,6 @@
     .pdf { background: #6f42c1; }
     .reset { background: #dc3545; }
 
-    /* PDF PAGE */
     #pdfPages {
         position: absolute;
         left: -9999px;
@@ -165,7 +158,6 @@
 
     <div class="sheet" id="sheet">
 
-        <!-- HEADER BOX (website only: no metadata here) -->
         <div class="header-box">
 
             <div class="header">
@@ -175,7 +167,6 @@
                 </div>
             </div>
 
-            <!-- TOP INPUT -->
             <table class="top-table">
                 <tr>
                     <td>Date: <input type="date" id="date"></td>
@@ -197,7 +188,8 @@
             <table class="main-table" id="mainTable">
                 <thead>
                     <tr>
-                        <th style="width:50px;">S.No</th>
+                        <th style="width:40px;">S.No</th>
+                        <th style="width:150px;">Barcode No</th> <!-- NEW COLUMN -->
                         <th style="width:220px;">Items</th>
                         <th style="width:160px;">Batch No</th>
                         <th style="width:150px;">Receiving Date</th>
@@ -230,7 +222,6 @@
 
 </div>
 
-<!-- PDF render container (hidden) -->
 <div id="pdfPages"></div>
 
 <script>
@@ -238,22 +229,20 @@ let data=[];
 const STORAGE="cts_v5";
 const ROWS=13;
 
-/* RENUMBER AFTER DELETE */
 function renumberRows(){
     const rows=document.querySelectorAll("#tbody tr");
     rows.forEach((tr,i)=>{
-        tr.children[0].innerText = i + 1;
+        tr.children[0].innerText=i+1;
     });
 }
 
-/* ADD ROW */
 function addRow(v=null){
     let tbody=document.getElementById("tbody");
     let index=data.length+1;
 
     let r=v||{
-        item:"",batch:"",rec:"",mfg:"",exp:"",
-        shelf:"",qty:"",remarks:"",locked:false
+        barcode:"", item:"", batch:"", rec:"", mfg:"", exp:"",
+        shelf:"", qty:"", remarks:"", locked:false
     };
 
     data.push(r);
@@ -261,6 +250,7 @@ function addRow(v=null){
     let tr=document.createElement("tr");
     tr.innerHTML=`
 <td>${index}</td>
+<td><input value="${r.barcode}"></td>   <!-- NEW -->
 <td><input value="${r.item}"></td>
 <td><input value="${r.batch}"></td>
 <td><input type="date" value="${r.rec}"></td>
@@ -277,14 +267,6 @@ function addRow(v=null){
 </td>
 `;
 
-    /* LOCKED MODE */
-    if(r.locked){
-        tr.classList.add("locked");
-        tr.querySelectorAll("input").forEach(i=>i.disabled=true);
-        tr.querySelector('.editbtn').style.display="inline";
-        tr.querySelector('.savebtn').style.display="none";
-    }
-
     /* DELETE ROW */
     tr.querySelector('.delbtn').addEventListener('click',()=>{
         let index=[...tbody.children].indexOf(tr);
@@ -293,29 +275,29 @@ function addRow(v=null){
         renumberRows();
     });
 
-    /* EDIT ROW */
+    /* EDIT */
     tr.querySelector('.editbtn').addEventListener('click',()=>{
         tr.classList.remove("locked");
         tr.querySelectorAll("input").forEach(i=>i.disabled=false);
-
         tr.querySelector('.editbtn').style.display="none";
         tr.querySelector('.savebtn').style.display="inline";
     });
 
-    /* SAVE EDITED ROW */
+    /* SAVE SINGLE ROW */
     tr.querySelector('.savebtn').addEventListener('click',()=>{
         let inp=tr.querySelectorAll("input");
         let index=[...tbody.children].indexOf(tr);
 
         data[index]={
-            item:inp[0].value,
-            batch:inp[1].value,
-            rec:inp[2].value,
-            mfg:inp[3].value,
-            exp:inp[4].value,
-            shelf:inp[5].value,
-            qty:inp[6].value,
-            remarks:inp[7].value,
+            barcode:inp[0].value,
+            item:inp[1].value,
+            batch:inp[2].value,
+            rec:inp[3].value,
+            mfg:inp[4].value,
+            exp:inp[5].value,
+            shelf:inp[6].value,
+            qty:inp[7].value,
+            remarks:inp[8].value,
             locked:true
         };
 
@@ -331,7 +313,7 @@ function addRow(v=null){
     tbody.appendChild(tr);
 }
 
-/* SAVE BUTTON (MAIN) */
+/* MAIN SAVE */
 function saveRows(){
     let rows=document.querySelectorAll("#tbody tr");
 
@@ -342,14 +324,15 @@ function saveRows(){
 
         if(hasData){
             data[i]={
-                item:inp[0].value,
-                batch:inp[1].value,
-                rec:inp[2].value,
-                mfg:inp[3].value,
-                exp:inp[4].value,
-                shelf:inp[5].value,
-                qty:inp[6].value,
-                remarks:inp[7].value,
+                barcode:inp[0].value,
+                item:inp[1].value,
+                batch:inp[2].value,
+                rec:inp[3].value,
+                mfg:inp[4].value,
+                exp:inp[5].value,
+                shelf:inp[6].value,
+                qty:inp[7].value,
+                remarks:inp[8].value,
                 locked:true
             };
 
@@ -382,7 +365,7 @@ function resetAll(){
     localStorage.removeItem(STORAGE);
 }
 
-/* RESTORE SAVED DATA */
+/* RESTORE */
 window.onload=()=>{
     const saved=localStorage.getItem(STORAGE);
     if(saved){
@@ -400,21 +383,22 @@ window.onload=()=>{
     }
 }
 
-/* PDF EXPORT — metadata included only inside the PDF (exact text as provided) */
+/* PDF EXPORT */
 async function downloadPDF(){
     const { jsPDF }=window.jspdf;
 
     // sync latest data
     document.querySelectorAll("#tbody tr").forEach((tr,i)=>{
         let inp=tr.querySelectorAll("input");
-        data[i].item=inp[0].value;
-        data[i].batch=inp[1].value;
-        data[i].rec=inp[2].value;
-        data[i].mfg=inp[3].value;
-        data[i].exp=inp[4].value;
-        data[i].shelf=inp[5].value;
-        data[i].qty=inp[6].value;
-        data[i].remarks=inp[7].value;
+        data[i].barcode=inp[0].value;
+        data[i].item=inp[1].value;
+        data[i].batch=inp[2].value;
+        data[i].rec=inp[3].value;
+        data[i].mfg=inp[4].value;
+        data[i].exp=inp[5].value;
+        data[i].shelf=inp[6].value;
+        data[i].qty=inp[7].value;
+        data[i].remarks=inp[8].value;
     });
 
     const head={
@@ -444,7 +428,6 @@ async function downloadPDF(){
         page.className="page";
         container.appendChild(page);
 
-        /* --- NOTE: metadata below heading is EXACTLY as you provided --- */
         page.innerHTML=`
             <div style="border:1px solid #000;padding:8px;margin-bottom:8px;">
 
@@ -478,6 +461,7 @@ async function downloadPDF(){
                 <thead>
                     <tr>
                         <th style="border:1px solid #000;padding:5px;">S.No</th>
+                        <th style="border:1px solid #000;padding:5px;">Barcode No</th>  <!-- NEW -->
                         <th style="border:1px solid #000;padding:5px;">Items</th>
                         <th style="border:1px solid #000;padding:5px;">Batch No</th>
                         <th style="border:1px solid #000;padding:5px;">Receiving Date</th>
@@ -492,6 +476,7 @@ async function downloadPDF(){
                     ${pages[p].map((r,i)=>`
                         <tr>
                             <td style="border:1px solid #000;padding:4px;">${(p*ROWS)+i+1}</td>
+                            <td style="border:1px solid #000;padding:4px;">${r.barcode}</td> <!-- NEW -->
                             <td style="border:1px solid #000;padding:4px;">${r.item}</td>
                             <td style="border:1px solid #000;padding:4px;">${r.batch}</td>
                             <td style="border:1px solid #000;padding:4px;">${r.rec}</td>
